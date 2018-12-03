@@ -10,14 +10,17 @@ import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
 
-app = dash.Dash(__name__)
-server = app.server
+app = dash.Dash()
 
-df = pd.read_csv('DataProject.csv')
+df = pd.read_csv('nama_10_gdp_1_Data.csv')
+df = df[~df.GEO.str.contains('Euro')]
+df = df[~df.UNIT.str.contains('Chain')]
 
-available_indicators = df['Indicator Name'].unique()
+available_indicators = df['NA_ITEM'].unique()
+available_countries = df['GEO'].unique()
 
 app.layout = html.Div([
+#first graph
     html.Div([
 
         html.Div([
@@ -33,7 +36,7 @@ app.layout = html.Div([
                 labelStyle={'display': 'inline-block'}
             )
         ],
-        style={'width': '48%', 'display': 'inline-block'}),
+        style={'width': '45%', 'display': 'inline-block', 'padding':20}),
 
         html.Div([
             dcc.Dropdown(
@@ -47,21 +50,45 @@ app.layout = html.Div([
                 value='Linear',
                 labelStyle={'display': 'inline-block'}
             )
-        ],style={'width': '48%', 'float': 'right', 'display': 'inline-block'})
+        ],style={'width': '45%', 'float': 'right', 'display': 'inline-block', 'padding':20})
     ]),
 
     dcc.Graph(id='indicator-graphic'),
 
     dcc.Slider(
         id='year--slider',
-        min=df['Year'].min(),
-        max=df['Year'].max(),
-        value=df['Year'].max(),
+        min=df['TIME'].min(),
+        max=df['TIME'].max(),
+        value=df['TIME'].max(),
         step=None,
-        marks={str(year): str(year) for year in df['Year'].unique()}
-    )
+        marks={str(year): str(year) for year in df['TIME'].unique()}
+    ),
+    
+#second graph        
+    html.Div([
+
+        html.Div([
+            dcc.Dropdown(
+                id='country-value',
+                options=[{'label': i, 'value': i} for i in available_countries],
+                value='Belgium'
+            )
+        ],
+        style={'width': '45%', 'display': 'inline-block', 'padding':20}),
+
+        html.Div([
+            dcc.Dropdown(
+                id='yaxis-column2',
+                options=[{'label': i, 'value': i} for i in available_indicators],
+                value='Value added, gross'
+            )
+        ],style={'width': '45%', 'float': 'right', 'display': 'inline-block', 'padding':20})
+    ]),
+
+    dcc.Graph(id='indicator-graphic2')
 ])
 
+#callback first graph
 @app.callback(
     dash.dependencies.Output('indicator-graphic', 'figure'),
     [dash.dependencies.Input('xaxis-column', 'value'),
@@ -72,13 +99,13 @@ app.layout = html.Div([
 def update_graph(xaxis_column_name, yaxis_column_name,
                  xaxis_type, yaxis_type,
                  year_value):
-    dff = df[df['Year'] == year_value]
+    dff = df[df['TIME'] == year_value]
     
     return {
         'data': [go.Scatter(
-            x=dff[dff['Indicator Name'] == xaxis_column_name]['value'],
-            y=dff[dff['Indicator Name'] == yaxis_column_name]['value'],
-            text=dff[dff['Indicator Name'] == yaxis_column_name]['Country Name'],
+            x=dff[dff['NA_ITEM'] == xaxis_column_name]['Value'],
+            y=dff[dff['NA_ITEM'] == yaxis_column_name]['Value'],
+            text=dff[dff['NA_ITEM'] == yaxis_column_name]['GEO'],
             mode='markers',
             marker={
                 'size': 15,
@@ -94,6 +121,35 @@ def update_graph(xaxis_column_name, yaxis_column_name,
             yaxis={
                 'title': yaxis_column_name,
                 'type': 'linear' if yaxis_type == 'Linear' else 'log'
+            },
+            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+            hovermode='closest'
+        )
+    }
+
+#callback second graph
+@app.callback(
+    dash.dependencies.Output('indicator-graphic2', 'figure'),
+    [dash.dependencies.Input('country-value', 'value'),
+    dash.dependencies.Input('yaxis-column2', 'value')])
+def update_graph(country_value, yaxis_column_name2, ):
+    dff = df[df['GEO'] == country_value]
+    
+    return {
+        'data': [go.Scatter(
+            x=dff[dff['NA_ITEM'] == yaxis_column_name2]['TIME'],
+            y=dff[dff['NA_ITEM'] == yaxis_column_name2]['Value'],
+            text=dff[dff['NA_ITEM'] == yaxis_column_name2]['GEO'],
+            mode='lines+markers',
+        )],
+        'layout': go.Layout(
+            xaxis={
+                'title': 'Time',
+                'type': 'linear'
+            },
+            yaxis={
+                'title': yaxis_column_name2,
+                'type': 'linear'
             },
             margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
             hovermode='closest'
