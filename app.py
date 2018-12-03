@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 import dash
@@ -10,7 +10,7 @@ import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
 
-app = dash.Dash(__dash_app_Brunno__)
+app = dash.Dash(__name__)
 server = app.server
 
 df = pd.read_csv('DataProject.csv')
