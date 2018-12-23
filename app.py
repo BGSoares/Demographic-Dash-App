@@ -16,14 +16,16 @@ server = app.server
 df = pd.read_csv('nama_10_gdp_1_Data.csv')
 df = df[~df.GEO.str.contains('Euro')]
 df = df[~df.UNIT.str.contains('Chain')]
+df = df.sort_values('GEO',kind='mergesort')
 
 available_indicators = df['NA_ITEM'].unique()
 available_countries = df['GEO'].unique()
 
 app.layout = html.Div([
+    html.H1('Macroeconomic Indicators',style={'textAlign': 'center'}),
 #first graph
     html.Div([
-
+        html.H2('Graph 1: Find relationships between macro indicators (choose two variables and year below)'),
         html.Div([
             dcc.Dropdown(
                 id='xaxis-column',
@@ -64,15 +66,15 @@ app.layout = html.Div([
         step=None,
         marks={str(year): str(year) for year in df['TIME'].unique()}
     ),
-    
+
 #second graph        
     html.Div([
-
+        html.H2('Graph 2: see time-trend of an indicator (choose country and variable below)'),
         html.Div([
             dcc.Dropdown(
                 id='country-value',
                 options=[{'label': i, 'value': i} for i in available_countries],
-                value='Belgium'
+                value='Albania'
             )
         ],
         style={'width': '45%', 'display': 'inline-block', 'padding':20}),
@@ -84,10 +86,10 @@ app.layout = html.Div([
                 value='Value added, gross'
             )
         ],style={'width': '45%', 'float': 'right', 'display': 'inline-block', 'padding':20})
-    ]),
-
-    dcc.Graph(id='indicator-graphic2')
-])
+    ],style={'marginTop': '80'}),
+    dcc.Graph(id='indicator-graphic2'),
+],style={'width':'95%','display': 'inline-block', 'padding':'20','step':'1'}
+)
 
 #callback first graph
 @app.callback(
@@ -123,7 +125,7 @@ def update_graph(xaxis_column_name, yaxis_column_name,
                 'title': yaxis_column_name,
                 'type': 'linear' if yaxis_type == 'Linear' else 'log'
             },
-            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+            margin={'l': 90, 'b': 80, 't': 10, 'r': 20},
             hovermode='closest'
         )
     }
@@ -146,13 +148,14 @@ def update_graph(country_value, yaxis_column_name2, ):
         'layout': go.Layout(
             xaxis={
                 'title': 'Time',
-                'type': 'linear'
+                'type': 'linear',
+                'dtick': '1'
             },
             yaxis={
                 'title': yaxis_column_name2,
-                'type': 'linear'
+                'type': 'linear',
             },
-            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+            margin={'l': 90, 'b': 40, 't': 10, 'r': 20},
             hovermode='closest'
         )
     }
